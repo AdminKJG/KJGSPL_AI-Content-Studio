@@ -9,12 +9,15 @@ class VideoFXClient:
     
     def __init__(self, user_data_dir: str):
         self.user_data_dir = user_data_dir
-        self.url = "https://aitestkitchen.withgoogle.com/tools/video-fx"
+        self.url = "https://flow.google.com/"
 
     def login_if_needed(self):
-        """Opens a headed browser to allow the user to log in if they haven't already."""
+        """Open Google Flow in a persistent Chrome profile for interactive login.
+
+        Authentication is confirmed by reaching a Flow project, NOT by finding an
+        arbitrary textbox on Google's landing page. Never log passwords or cookies.
+        """
         with sync_playwright() as p:
-            logging.info(f"Opening browser for login (Profile: {self.user_data_dir})...")
             browser = p.chromium.launch_persistent_context(
                 user_data_dir=self.user_data_dir,
                 headless=False,
@@ -22,20 +25,23 @@ class VideoFXClient:
                 args=["--disable-blink-features=AutomationControlled"],
                 ignore_default_args=["--enable-automation"]
             )
-            page = browser.new_page()
-            page.goto(self.url)
-            
-            logging.info("Please log into your Google Account if prompted.")
-            logging.info("Waiting for the VideoFX prompt input area to become visible...")
-            
             try:
-                # Wait for something that indicates we are logged in, e.g. the prompt textarea
-                # Use a more robust selector to avoid matching hidden recaptcha textareas
-                prompt_locator = page.locator('textarea:not(.g-recaptcha-response), [contenteditable="true"], [role="textbox"], input[type="text"]').locator("visible=true").first
-                prompt_locator.wait_for(timeout=300000) # 5 minutes for user to log in
-                logging.info("Login successful. Prompt area found!")
-            except TimeoutError:
-                logging.error("Login timed out or VideoFX prompt area not found.")
+                # A persistent context already has a default tab. Reuse it.
+                page = browser.pages[0] if browser.pages else browser.new_page()
+                page.goto(self.url, wait_until="domcontentloaded", timeout=60000)
+                logging.info("Google Flow opened. Sign in normally and open a project.")
+                logging.info("Waiting up to 10 minutes for a Flow project URL; do not close this window.")
+                deadline = time.monotonic() + 600
+                while time.monotonic() < deadline:
+                    for tab in browser.pages:
+                        if tab.url.startswith("https://flow.google.com/project/"):
+                            logging.info("Google Flow project reached; local browser profile retained.")
+                            return
+                    time.sleep(2)
+                raise RuntimeError(
+                    "Google Flow project not reached within 10 minutes. "
+                    "Sign in and open New project in the automation Chrome window, then retry."
+                )
             finally:
                 browser.close()
 
@@ -61,7 +67,14 @@ class VideoFXClient:
             page.on("download", handle_download)
             
             try:
-                page.goto(self.url, wait_until="networkidle")
+                page.goto(self.url, wait_until="domcontentloaded")
+                if page.url.startswith("https://flow.google.com"):
+                    raise RuntimeError(
+                        "Google Flow is accessible, but this legacy VideoFX automation "
+                        "does not support the current project editor. The login connection "
+                        "is separate from video generation. Do not retry paid generations "
+                        "until a supported Flow integration is implemented."
+                    )
                 
                 # 1. Enter the prompt
                 # Use a more robust selector to avoid matching hidden recaptcha textareas

@@ -96,8 +96,9 @@ export default function VideoFXPage() {
 
   const handleLogin = async () => {
     try {
-      await apiFetch(`${API_BASE_URL}/api/videofx/login`, { method: "POST" });
-      alert("A browser window will open shortly on your computer. Please log in to your Google Account there. Your session will be saved forever, so you only need to do this once!");
+      const res = await apiFetch(`${API_BASE_URL}/api/videofx/login`, { method: "POST" });
+      if (!res.ok) throw new Error(`Login request failed (${res.status})`);
+      alert("Chrome will open with a separate local profile. Sign in, open a Google Flow project, and wait for the backend to confirm it. Login does not enable automatic video generation yet.");
     } catch (e) {
       console.error(e);
     }
@@ -108,7 +109,7 @@ export default function VideoFXPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">VideoFX Flow</h1>
-          <p className="text-zinc-400 mt-1">Generate high-quality video clips using Google VideoFX browser automation.</p>
+          <p className="text-zinc-400 mt-1">Google Flow login and manual creation. Legacy automated generation is not compatible with the current Flow editor.</p>
         </div>
         <button onClick={handleLogin} className="btn-secondary !w-auto text-xs px-4 py-2.5 flex items-center gap-2">
           <LogIn className="h-4 w-4 text-[#66fcf1]" /> Connect Google Account
@@ -118,6 +119,7 @@ export default function VideoFXPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4 space-y-6">
           <form onSubmit={handleGenerate} className="glass-card p-6 space-y-6">
+            <p className="text-amber-300 text-xs">Automatic Flow generation is not yet supported. Use Copy Prompt and Open Google Flow to generate manually without triggering a failing automation job.</p>
             <div>
               <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase tracking-wider">Video Prompt</label>
               <textarea
@@ -155,16 +157,19 @@ export default function VideoFXPage() {
               </div>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => navigator.clipboard.writeText(prompt)} disabled={!prompt.trim()} className="btn-secondary !w-auto text-xs px-3 py-2">Copy Prompt</button>
+              <a href="https://flow.google.com/" target="_blank" rel="noopener noreferrer" className="btn-secondary !w-auto text-xs px-3 py-2">Open Google Flow</a>
               <button
                 type="submit"
-                disabled={status === "running"}
+                disabled={true}
+                title="Legacy VideoFX generation is incompatible with current Google Flow"
                 className="btn-primary flex-1 !w-auto"
               >
                 {status === "running" ? (
                   <><Loader2 className="h-4 w-4 animate-spin text-black" /> GENERATING...</>
                 ) : (
-                  <><Play className="h-4 w-4 fill-black stroke-black" /> GENERATE VIDEO</>
+                  <><Play className="h-4 w-4 fill-black stroke-black" /> AUTO GENERATION UNAVAILABLE</>
                 )}
               </button>
               
