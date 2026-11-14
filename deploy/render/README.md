@@ -28,3 +28,7 @@ This build runs the existing frontend, backend, and reverse proxy in **one free 
 5. Persistence is tested separately before calling this production-ready.
 
 Production requires persistent encrypted storage, backups, resource sizing, and a security review. Refer to root DEPLOYMENT.md.
+
+## VideoFX browser automation
+
+The evaluation image includes Debian Chromium and launches it headless. This resolves Playwright's missing-Chrome executable error, **not** Google VideoFX login or Google anti-bot limitations. The cloud service cannot present an interactive Google login window. Google sessions stored on ephemeral Render storage do not persist after redeploy, and the current UI login button is not usable on this host. Use the other API-driven features for cloud evaluation; only use VideoFX after an approved, durable authentication workflow has been designed and tested. Never commit Google cookies or OAuth credentials.
