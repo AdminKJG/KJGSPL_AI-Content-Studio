@@ -11,16 +11,25 @@ class VideoFXClient:
         self.user_data_dir = user_data_dir
         self.url = "https://aitestkitchen.withgoogle.com/tools/video-fx"
 
+    def _launch_options(self):
+        """Use server-installed Chromium headlessly on Render; keep desktop Chrome locally."""
+        headless = os.getenv("VIDEOFX_HEADLESS", "false").lower() in ("1", "true", "yes")
+        if headless:
+            return {"headless": True, "executable_path": os.getenv("VIDEOFX_CHROMIUM_PATH", "/usr/bin/chromium"),
+                    "args": ["--no-sandbox", "--disable-dev-shm-usage"]}
+        return {"headless": False, "channel": "chrome",
+                "args": ["--disable-blink-features=AutomationControlled"],
+                "ignore_default_args": ["--enable-automation"]}
+
     def login_if_needed(self):
         """Opens a headed browser to allow the user to log in if they haven't already."""
+        if self._launch_options()["headless"]:
+            raise RuntimeError("Interactive VideoFX login is unavailable on headless Render. Authenticate on a trusted local machine instead; do not upload session cookies or browser profiles to GitHub.")
         with sync_playwright() as p:
             logging.info(f"Opening browser for login (Profile: {self.user_data_dir})...")
             browser = p.chromium.launch_persistent_context(
                 user_data_dir=self.user_data_dir,
-                headless=False,
-                channel="chrome",
-                args=["--disable-blink-features=AutomationControlled"],
-                ignore_default_args=["--enable-automation"]
+                **self._launch_options()
             )
             page = browser.new_page()
             page.goto(self.url)
@@ -46,10 +55,7 @@ class VideoFXClient:
         with sync_playwright() as p:
             browser = p.chromium.launch_persistent_context(
                 user_data_dir=self.user_data_dir,
-                headless=False,
-                channel="chrome",
-                args=["--disable-blink-features=AutomationControlled"],
-                ignore_default_args=["--enable-automation"]
+                **self._launch_options()
             )
             page = browser.new_page()
             
