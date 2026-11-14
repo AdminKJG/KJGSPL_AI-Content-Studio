@@ -118,7 +118,8 @@ export default function VideoFXPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4 space-y-6">
-          <form onSubmit={handleGenerate} className="glass-card p-6 space-y-6">\n            <p className="text-amber-300 text-xs">Automatic Flow generation is not yet supported. Use Copy Prompt and Open Google Flow to generate manually without triggering a failing automation job.</p>
+          <form onSubmit={handleGenerate} className="glass-card p-6 space-y-6">
+            <p className="text-amber-300 text-xs">Automatic Flow generation is not yet supported. Use Copy Prompt and Open Google Flow to generate manually without triggering a failing automation job.</p>
             <div>
               <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase tracking-wider">Video Prompt</label>
               <textarea
