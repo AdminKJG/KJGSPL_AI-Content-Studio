@@ -157,7 +157,9 @@ export default function VideoFXPage() {
               </div>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => navigator.clipboard.writeText(prompt)} disabled={!prompt.trim()} className="btn-secondary !w-auto text-xs px-3 py-2">Copy Prompt</button>
+              <a href="https://flow.google.com/" target="_blank" rel="noopener noreferrer" className="btn-secondary !w-auto text-xs px-3 py-2">Open Google Flow</a>
               <button
                 type="submit"
                 disabled={true}
